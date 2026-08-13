@@ -1,0 +1,21 @@
+{
+  "salesAndTrafficByAsin": [
+    {
+      "parentAsin": "B0SYNTH004",
+      "childAsin": "B0SYNTH001",
+      "salesByAsin": {
+        "unitsOrdered": 12,
+        "totalOrderItems": 11,
+        "orderedProductSales": {"amount": 299.88, "currencyCode": "USD"}
+      },
+      "trafficByAsin": {
+        "sessions": 120,
+        "pageViews": 170,
+        "sessionPercentage": 0.42,
+        "pageViewsPercentage": 0.39,
+        "buyBoxPercentage": 98.5,
+        "unitSessionPercentage": 10.0
+      }
+    }
+  ]
+}

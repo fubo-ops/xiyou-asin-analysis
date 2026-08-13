@@ -1,0 +1,17 @@
+{
+  "case_id": "synthetic-funnel-gap",
+  "run_id": "synthetic-run-v1",
+  "marketplace": "US",
+  "own_asin": "B0SYNTH001",
+  "competitors": [
+    {"asin": "B0SYNTH002", "role": "traffic_leader"},
+    {"asin": "B0SYNTH003", "role": "rating_peer"}
+  ],
+  "period": {"start": "2026-01-01", "end": "2026-01-30"},
+  "objective": "验证自身查询覆盖不足是否是当前最早漏斗断点",
+  "lifecycle": "growth",
+  "ruleset_version": "sop-v5.1",
+  "competitor_review_status": "APPROVED",
+  "event_history_status": "CONFIRMED",
+  "known_events": []
+}
