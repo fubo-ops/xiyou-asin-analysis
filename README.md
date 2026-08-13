@@ -94,7 +94,7 @@ python scripts/validate_distribution.py
 真实 Case 的最小流程：
 
 ```bash
-python scripts/create_case.py --output case.json --case-id case-001 --marketplace US --own-asin B000000001 --competitor B000000002 --period-start 2026-01-01 --period-end 2026-01-30 --objective "定位自然流量下滑的最早漏斗断点"
+python scripts/create_case.py --output case.json --marketplace US --own-asin B000000001 --competitor B000000002 --competitor B000000003 --competitor B000000004 --competitor B000000005 --period-start 2026-01-01 --period-end 2026-01-30 --objective "定位自然流量下滑的最早漏斗断点"
 python scripts/ingest_xiyou.py --case case.json --data-dir data --file path/to/xiyou-export.xlsx --source-period-start 2026-01-01 --source-period-end 2026-01-30 --period-basis official_export_selected_1m
 python scripts/fetch_amazon.py --case case.json --data-dir data
 python scripts/build_report.py --case case.json --data-dir data --output reports/analysis.md

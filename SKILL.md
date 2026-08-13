@@ -18,7 +18,7 @@ description: Use this skill when an Amazon seller needs to compare an owned ASIN
 
 ## 1. 任务受理与人工门①
 
-拒绝把“出一份报告”当作业务问题。至少落成：站点、自身 ASIN、4–8 个分层竞品、周期、触发原因、要支持的决策、已知断货/促销/调价/变体事件。
+拒绝把“出一份报告”当作业务问题。真实 Case 至少落成：站点、自身 ASIN、4–8 个分层竞品、周期、触发原因、要支持的决策、已知断货/促销/调价/变体事件。`cases/synthetic-case` 为最小回放，允许只含 2 个合成竞品，不适用于真实结论。
 
 运行：
 
@@ -112,4 +112,4 @@ python scripts/smoke_test.py --work-dir .smoke
 python scripts/validate_distribution.py
 ```
 
-真实 Case 完成前检查：原始 hash 全部一致；报告 Evidence ID 全部可解析；不存在 Mock/fixture 路径；缺失模块保持 `MISSING_DATA`、`REVIEW_REQUIRED` 或 `BLOCKED`。
+`smoke_test.py` 会把合成 JSON 生成临时 XLSX 并明确输出 `synthetic_data: true`；`--work-dir` 必须是新目录或空目录，脚本不会清空既有目录。真实 Case 完成前另行检查：原始 hash 全部一致；报告 Evidence ID 全部可解析；真实数据链中不存在 Mock/fixture 路径；缺失模块保持 `MISSING_DATA`、`REVIEW_REQUIRED` 或 `BLOCKED`。

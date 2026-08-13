@@ -14,7 +14,7 @@
 | `run_id` | string | 否 | 同一 Case 的回放批次；默认等于 `case_id` |
 | `marketplace` | string | 是 | 站点，例如 `US` |
 | `own_asin` | string | 是 | 自身 ASIN，10 位大写字母数字 |
-| `competitors` | array | 是 | 唯一且不与自身重复 |
+| `competitors` | array | 是 | 真实 Case 为 4–8 个；元素可为 ASIN string，或 `{asin, role}` 对象；唯一且不与自身重复。公开 synthetic 回放允许 2 个合成竞品 |
 | `period.start` | date | 是 | ISO 8601 |
 | `period.end` | date | 是 | ISO 8601 |
 | `objective` | string | 是 | 具体可诊断业务问题 |

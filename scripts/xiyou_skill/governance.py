@@ -98,6 +98,11 @@ def build_governance_bundle(
         for record in records
     )
     g0_issues = []
+    synthetic_case = all(asin.startswith("B0SYNTH") for asin in case.all_asins)
+    if not synthetic_case and not 4 <= len(case.competitors) <= 8:
+        g0_issues.append("真实 Case 必须包含 4–8 个竞品")
+    if not case.objective.strip() or case.objective.strip() == "综合诊断":
+        g0_issues.append("缺少具体、可验证的业务问题")
     if not any(record.source_name == "XIYOU" for record in records):
         g0_issues.append("缺少西柚真实数据")
     if not any(record.source_name == "AMAZON_SALES_TRAFFIC" for record in records):
@@ -112,7 +117,7 @@ def build_governance_bundle(
         "alternative_causes", "missing_evidence", "falsification_condition", "confidence"
     )) and set(claim["evidence_ids"]).issubset(set(evidence_ids))
     quality_gates = [
-        _gate("G0", "输入完整性", "PASS" if not g0_issues else "BLOCKED", g0_issues),
+        _gate("G0", "范围与输入完整性", "PASS" if not g0_issues else "BLOCKED", g0_issues),
         _gate("G1", "竞品可比性", "PASS" if not g1_issues else "REVIEW_REQUIRED", g1_issues),
         _gate("G2", "来源真实性", "PASS" if source_levels_valid else "BLOCKED", [] if source_levels_valid else ["来源层级映射不一致"]),
         _gate("G3", "样本与异常", "PASS" if not g3_issues else "REVIEW_REQUIRED", g3_issues),
@@ -131,4 +136,3 @@ def build_governance_bundle(
         "action_plan": [action],
         "review_plan": review_plan,
     }
-

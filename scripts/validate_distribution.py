@@ -27,7 +27,7 @@ SECRET_PATTERNS = (
 
 
 def is_allowed_public_asin(asin: str) -> bool:
-    return asin.startswith("B0SYNTH") or asin in {"B000000001", "B000000002"}
+    return asin.startswith("B0SYNTH") or bool(re.fullmatch(r"B00000000[1-9]", asin))
 
 
 def build_parser() -> argparse.ArgumentParser:

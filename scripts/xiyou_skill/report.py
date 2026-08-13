@@ -392,9 +392,9 @@ def render_report(
     behind_queries = chain["ranking"].metrics["own_behind_best_competitor"].value
     lines += ["## 9. 根因", ""]
     if chain["coverage"].status == "AVAILABLE" and missing_queries:
-        lines.append(f"- 主要根因（中等置信度，L3）：关键词覆盖缺口，竞品覆盖而自身缺失 `{missing_queries}` 个查询；完整 Evidence ID 见诊断 sidecar。")
+        lines.append(f"- 最早观测断点（低置信度，L3）：西柚估算提示关键词覆盖缺口，竞品覆盖而自身缺失 `{missing_queries}` 个查询；这不是已验证根因，完整 Evidence ID 见诊断 sidecar。")
     elif chain["ranking"].status == "AVAILABLE" and behind_queries:
-        lines.append(f"- 主要根因（中等置信度，L3）：共同查询排名落后，落后最优竞品 `{behind_queries}` 个查询。")
+        lines.append(f"- 最早观测断点（低置信度，L3）：西柚估算提示共同查询排名落后，落后最优竞品 `{behind_queries}` 个查询；这不是已验证根因。")
     else:
         lines.append("- 主要根因：证据不足，尚不能确认。")
     lines += [
@@ -477,4 +477,3 @@ def render_report(
             json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8"
         )
     return output
-

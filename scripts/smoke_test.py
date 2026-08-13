@@ -59,6 +59,8 @@ def _assert_traceability(work_dir: Path, report: Path) -> dict[str, int]:
             raise AssertionError(f"missing raw artifact: {record['raw_path']}")
 
     report_text = report.read_text(encoding="utf-8")
+    if "中等置信度，L3" in report_text or "低置信度，L3" not in report_text:
+        raise AssertionError("single-source L3 diagnosis must remain LOW confidence")
     cited = {evidence_id for evidence_id in evidence_ids if evidence_id in report_text}
     if not cited:
         raise AssertionError("report cites no Evidence ID")
@@ -71,9 +73,10 @@ def _assert_traceability(work_dir: Path, report: Path) -> dict[str, int]:
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     work_dir = Path(args.work_dir).resolve()
-    if work_dir.exists():
-        shutil.rmtree(work_dir)
-    work_dir.mkdir(parents=True)
+    if work_dir.exists() and any(work_dir.iterdir()):
+        print(f"work directory must be new or empty: {work_dir}", file=sys.stderr)
+        return 2
+    work_dir.mkdir(parents=True, exist_ok=True)
 
     fixture_dir = ROOT / "cases" / "synthetic-case"
     case_path = work_dir / "case.json"

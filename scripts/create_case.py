@@ -26,6 +26,8 @@ def main() -> int:
         parser.error("ASIN must contain exactly 10 uppercase letters or digits")
     if own in competitors or len(competitors) != len(set(competitors)):
         parser.error("own ASIN and competitor ASINs must be unique")
+    if not 4 <= len(competitors) <= 8:
+        parser.error("a real diagnostic Case requires 4 to 8 competitors")
     start, end = date.fromisoformat(args.period_start), date.fromisoformat(args.period_end)
     if start > end:
         parser.error("period start must not be after period end")
