@@ -9,5 +9,13 @@ description = "Traceable Amazon multi-ASIN diagnostic Agent Skill"
 requires-python = ">=3.12"
 dependencies = ["openpyxl>=3.1,<4", "requests>=2.32,<3"]
 
+[project.optional-dependencies]
+dev = ["pytest>=8.3,<9"]
+
 [tool.setuptools]
 packages = []
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["scripts"]
+addopts = "-ra"
