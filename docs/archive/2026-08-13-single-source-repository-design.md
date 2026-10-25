@@ -1,5 +1,7 @@
 # Single-Source Repository Migration Design
 
+> 历史归档：2026-08-13 单一源码迁移阶段的设计/执行记录。对应源码目录、测试和 CI 已进入当前仓库；原文中的临时工作区与“不得提交”约束仅属于当时阶段。当前入口和目录以 [README](../../README.md) 为准。
+
 ## Goal
 
 Make the clean `xiyou-asin-analysis` checkout the only maintained local and remote code baseline for the public Agent Skill, while keeping the existing starter-pack workspace unchanged as a temporary backup.
@@ -42,7 +44,7 @@ xiyou-asin-analysis/
 │   └── validate_distribution.py
 ├── tests/                    # canonical deterministic test suite
 ├── tools/verify_phase2.py
-└── docs/superpowers/specs/   # migration decision record
+└── docs/archive/              # archived migration records
 ```
 
 ## Data and Credential Boundary

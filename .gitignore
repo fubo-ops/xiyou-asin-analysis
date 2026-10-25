@@ -16,3 +16,14 @@ reports/
 exports/
 logs/
 *.log
+
+# 本机配置变体、浏览器账号文件与默认 Case 输出
+.env.*
+!.env.example
+*cookie*
+*Cookie*
+credentials.json
+*.key
+*.pem
+/case.json
+.DS_Store

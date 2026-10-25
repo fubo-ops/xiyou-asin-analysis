@@ -1,5 +1,7 @@
 # Single-Source Repository Migration Implementation Plan
 
+> 历史归档：2026-08-13 单一源码迁移阶段的设计/执行记录。对应源码目录、测试和 CI 已进入当前仓库；原文中的临时工作区与“不得提交”约束仅属于当时阶段。当前入口和目录以 [README](../../README.md) 为准。
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Turn the clean `xiyou-asin-analysis` clone into the single maintained code baseline with migrated deterministic tests, CI, and repository safety gates.
