@@ -9,9 +9,9 @@
 
 ## 项目简介
 
-`xiyou-asin-analysis` 是一个 Amazon 多 ASIN 竞品分析 Agent Skill，配套 Python 命令行工具。输入自身 ASIN、竞品池、分析周期、西柚官方导出和 Amazon SP-API 报告，按“覆盖 → 排名 → 点击 → 转化”定位问题，生成带证据引用的 Markdown 报告。
+`xiyou-asin-analysis` 是一个 Amazon 多 ASIN 竞品分析 Agent Skill（智能体技能包），配套 Python 命令行工具。输入自身 ASIN、竞品池、分析周期、西柚官方导出和 Amazon SP-API（亚马逊卖家接口）报告，按“覆盖 → 排名 → 点击 → 转化”定位问题，生成带证据引用的 Markdown 报告。
 
-仓库把确定性计算和语义判断分开：Python 脚本负责文件归档、指标清洗、诊断规则和报告生成，[SKILL.md](SKILL.md) 规定 Agent 的取数顺序、人工确认和行动评审。脚本不会自动修改广告、Listing、价格或促销。
+仓库把固定规则计算和语义判断分开：Python 脚本负责文件归档、指标清洗、诊断规则和报告生成，[SKILL.md](SKILL.md) 规定 Agent（智能体）的取数顺序、人工确认和行动评审。脚本不会自动修改广告、Listing（商品详情页）、价格或促销。
 
 ## 核心功能
 
@@ -63,7 +63,7 @@
    cp .env.example .env
    ```
 
-4. 从西柚官方页面下载对应周期的 XLSX，并创建 Case（ASIN 与日期仅为占位）
+4. 下载对应周期的西柚 XLSX，并建一个本地分析任务（Case，ASIN 与日期仅为占位）
 
    ```bash
    python scripts/create_case.py --output .runtime/case.json --marketplace US --own-asin <OWN_ASIN> --competitor <COMP_ASIN_1> --competitor <COMP_ASIN_2> --period-start 2026-01-01 --period-end 2026-01-30 --objective "定位自然流量下滑的最早漏斗断点"
@@ -159,26 +159,26 @@ xiyou-asin-analysis/
 
 ### Phase 1: 任务与数据接入
 
-- ✅ Case 创建（站点、竞品、周期、业务问题）
+- ✅ Case（分析任务）创建（站点、竞品、周期、业务问题）
 - ✅ 西柚 XLSX 导入与指标清洗
 - ✅ Amazon Sales and Traffic 导入与 SP-API 获取
 
 ### Phase 2: 诊断与证据
 
 - ✅ 覆盖 → 排名 → 点击 → 转化漏斗诊断
-- ✅ SQP 完整周取数与 `reportId` 恢复
-- ✅ 原始文件 SHA-256、定位器与 Evidence ID 归档
+- ✅ SQP（搜索查询表现报告）完整周取数与 `reportId`（报告编号）恢复
+- ✅ 原始文件 SHA-256（文件指纹）、定位器与 Evidence ID（证据编号）归档
 
 ### Phase 3: 报告与评审
 
-- ✅ Markdown 报告与五个 JSON sidecar
-- ✅ 质量门、结论与行动评审输出
-- ✅ 合成 Case 离线回放
+- ✅ Markdown 报告与五个 JSON sidecar（附带文件）
+- ✅ 质量门（质量校验门槛）、结论与行动评审输出
+- ✅ 合成 Case（分析任务）离线回放
 
 ### Phase 4: 工程化
 
 - ✅ GitHub Actions（Windows，pytest + 回放 + 分发检查）
-- ✅ 仓库分发契约测试
+- ✅ 仓库分发契约检查（目录与文件约定）
 - ⬜ 真实业务验收记录
 - ⬜ 后续功能排期与发布里程碑
 
