@@ -11,199 +11,176 @@
 
 `xiyou-asin-analysis` 是一个 Amazon 多 ASIN 竞品分析 Agent Skill，配套 Python 命令行工具。输入自身 ASIN、竞品池、分析周期、西柚官方导出和 Amazon SP-API 报告，按“覆盖 → 排名 → 点击 → 转化”定位问题，生成带证据引用的 Markdown 报告。
 
-Python 脚本负责文件归档、指标清洗、诊断规则和报告生成；[SKILL.md](SKILL.md) 规定 Agent 的取数顺序、人工确认和行动评审。脚本不会自动修改广告、Listing、价格或促销。
+仓库把确定性计算和语义判断分开：Python 脚本负责文件归档、指标清洗、诊断规则和报告生成，[SKILL.md](SKILL.md) 规定 Agent 的取数顺序、人工确认和行动评审。脚本不会自动修改广告、Listing、价格或促销。
 
 ## 核心功能
 
-- 创建包含站点、自身 ASIN、4–8 个竞品、周期和业务问题的 Case，保留竞品池待审核状态。
-- 导入西柚 XLSX，识别总览和关键词数据，记录来源周期及第三方估算层级。
-- 通过 Amazon SP-API 获取 Sales and Traffic、SQP 报告，或导入已有 Sales and Traffic JSON。
-- SQP 按完整周取数，保存 `reportId`，中断后按原报告恢复；同周期报告保留原始版本。
-- 为原始文件记录 SHA-256、采集时间、字段定位器和 Evidence ID，保存标准化 JSONL 与来源状态。
-- 输出漏斗诊断、关键词差距、证据引用，以及质量门、结论、行动和复盘计划的 JSON sidecar。
-- 用合成 Case 离线回放，检查报告引用和证据链；分发检查验证 Skill 结构、Python 语法及敏感内容。
-
-西柚数据是第三方估算，不能替代 Amazon 后台事实。缺少 SQP、广告或页面证据时，对应结论保持缺失或待验证。
+- 🧭 **漏斗定位**：覆盖、排名、点击、转化
+- 🗂️ **Case 管理**：站点、竞品、周期与问题
+- 📊 **西柚导入**：清洗总览与关键词表
+- ☁️ **Amazon 取数**：Sales/Traffic 与 SQP
+- ♻️ **SQP 续跑**：按 reportId 恢复原报告
+- 🧾 **证据留痕**：SHA-256、定位器与 ID
+- 📝 **报告输出**：Markdown 报告与五个 JSON
 
 ## 技术栈
 
-| 用途 | 技术 | 仓库声明 |
+| 层级 | 技术 | 版本 |
 | --- | --- | --- |
-| CLI 与诊断逻辑 | Python、argparse、标准库 | Python 3.12+ |
-| XLSX 读取与合成样例 | openpyxl | `>=3.1,<4` |
-| Amazon API 请求 | requests | `>=2.32,<3` |
-| 证据与输出 | JSON、JSONL、Markdown、SHA-256 | 本地文件，无数据库服务 |
-| 测试与构建配置 | pytest、setuptools | pytest `>=8.3,<9`；setuptools `>=75` |
-| CI | GitHub Actions | Windows、Python 3.12，运行测试、合成回放和分发检查 |
+| 语言 | Python（argparse + 标准库） | >=3.12 |
+| Excel 读取 | openpyxl | >=3.1,<4 |
+| HTTP 请求 | requests | >=2.32,<3 |
+| 测试 | pytest | >=8.3,<9 |
+| 构建 | setuptools | — |
+| CI | GitHub Actions（Windows） | — |
 
-依赖范围见 [requirements.txt](requirements.txt) 和 [pyproject.toml](pyproject.toml)；仓库没有依赖锁文件。
+版本取自 `requirements.txt` 与 `pyproject.toml`，仓库没有依赖锁文件。setuptools 只声明 `>=75`、CI 的 Python 版本写在工作流里，两者都无可比版本号，记「—」。
 
 ## 快速开始
 
-### 环境要求
+需要 Python 3.12+ 和 Git，Windows、macOS、Linux 均可；只跑合成回放不需要账号或浏览器，取真实 Amazon 数据需要已注册的 SP-API 应用与卖家授权。以下命令在仓库根目录执行，尖括号占位符请替换成真实值。
 
-- Python 3.12+、Git，Windows、macOS 或 Linux；CI 配置覆盖 Windows。
-- 只运行合成回放不需要账号或浏览器。
-- 获取真实 Amazon 数据需要已注册的 SP-API 应用、卖家授权的 LWA refresh token 和目标站点权限；SQP 另需相应权限。
-- 西柚数据由已登录的 Chrome/Chromium 页面通过官方下载取得；仓库不提供浏览器登录或 Cookie 提取工具。
+1. 克隆仓库，建虚拟环境并安装依赖
 
-### 安装
+   ```bash
+   git clone https://github.com/fubo-ops/xiyou-asin-analysis.git
+   cd xiyou-asin-analysis
+   python -m venv .venv
+   source .venv/bin/activate
+   python -m pip install -r requirements.txt
+   ```
 
-```bash
-git clone https://github.com/fubo-ops/xiyou-asin-analysis.git
-cd xiyou-asin-analysis
-python -m venv .venv
-```
+2. 先跑不联网的合成回放和分发自检，确认环境可用
 
-激活虚拟环境：Windows PowerShell 使用 `.venv\Scripts\Activate.ps1`，macOS / Linux 使用 `source .venv/bin/activate`。然后安装依赖：
+   ```bash
+   python scripts/smoke_test.py --work-dir .smoke-run
+   python scripts/validate_distribution.py
+   ```
 
-```bash
-python -m pip install -r requirements.txt
-```
+3. 生成本机 `.env`，按接入说明填写 SP-API 配置
 
-作为 Agent Skill 使用时，将完整仓库目录复制到宿主的 skills 目录，目录名保持 `xiyou-asin-analysis`。宿主目录包括 `~/.codex/skills/`、`~/.claude/skills/` 和 `~/.hermes/skills/`。`SKILL.md`、`references/`、`assets/` 和 `scripts/` 应一并保留。
+   ```bash
+   cp .env.example .env
+   ```
 
-### 使用
+4. 从西柚官方页面下载对应周期的 XLSX，并创建 Case（ASIN 与日期仅为占位）
 
-先运行不联网的合成回放。`--work-dir` 必须是新目录或空目录：
+   ```bash
+   python scripts/create_case.py --output .runtime/case.json --marketplace US --own-asin <OWN_ASIN> --competitor <COMP_ASIN_1> --competitor <COMP_ASIN_2> --period-start 2026-01-01 --period-end 2026-01-30 --objective "定位自然流量下滑的最早漏斗断点"
+   ```
 
-```bash
-python scripts/smoke_test.py --work-dir .smoke-run
-python scripts/validate_distribution.py
-```
+5. 导入西柚导出、取 Amazon 报告，生成 Markdown 报告与 JSON 补充
 
-回放会生成合成 XLSX、登记 Amazon JSON、清洗指标并生成报告，成功时输出 `status: PASS` 和 `synthetic_data: true`。
+   ```bash
+   python scripts/ingest_xiyou.py --case .runtime/case.json --data-dir .runtime/data --file <XIYOU_XLSX> --source-period-start 2026-01-01 --source-period-end 2026-01-30 --period-basis official_export_selected_1m
+   python scripts/fetch_amazon.py --case .runtime/case.json --data-dir .runtime/data
+   python scripts/build_report.py --case .runtime/case.json --data-dir .runtime/data --output .runtime/report.md
+   ```
 
-真实任务先按 [接入说明](references/SETUP.md) 将 `.env.example` 复制为本机 `.env`，填写 SP-API 配置；从西柚官方页面下载对应周期的 XLSX。以下 ASIN 和日期仅为格式占位，使用时替换为已确认的任务范围：
+6. 已有 SQP `reportId` 时只做恢复，不重复创建报告
 
-```bash
-python scripts/create_case.py --output work/case.json --marketplace US --own-asin B000000001 --competitor B000000002 --competitor B000000003 --competitor B000000004 --competitor B000000005 --period-start 2026-01-01 --period-end 2026-01-30 --objective "定位自然流量下滑的最早漏斗断点"
-python scripts/ingest_xiyou.py --case work/case.json --data-dir work/data --file exports/xiyou-export.xlsx --source-period-start 2026-01-01 --source-period-end 2026-01-30 --period-basis official_export_selected_1m
-python scripts/fetch_amazon.py --case work/case.json --data-dir work/data
-python scripts/build_report.py --case work/case.json --data-dir work/data --output work/report.md
-```
+   ```bash
+   python scripts/resume_sqp.py --case .runtime/case.json --data-dir .runtime/data --report-id <REPORT_ID> --period-start 2026-01-04 --period-end 2026-01-10
+   ```
 
-Case 创建后仍需按 Skill 流程确认竞品池、周期和业务问题。报告会同时输出 `*.diagnostics.json`、`*.quality-gates.json`、`*.claims.json`、`*.action-plan.json` 和 `*.review-plan.json`；建议动作需另经人工评审。
-
-已有 SQP `reportId` 时，使用原报告恢复，不重复创建：
-
-```bash
-python scripts/resume_sqp.py --case work/case.json --data-dir work/data --report-id REPORT_ID --period-start 2026-01-04 --period-end 2026-01-10
-```
-
-真实 Case、原始导出、报告和凭据保存在被忽略的运行目录中。`cases/synthetic-case/` 只保留仓库合成样例。
+第 4 步之后仍需按 Skill 流程确认竞品池、周期和业务问题；建议动作要经人工评审。真实 Case、原始导出、报告和凭据都保存在被 Git 忽略的运行目录里。
 
 ## 项目结构
 
-以下列出全部已跟踪文件。`.env`、`work/`、`data/`、`reports/` 和合成回放输出是本机运行文件，不在结构树中。
+只列两层，完整文件清单见文末《详细说明》。
 
 ```text
 xiyou-asin-analysis/
-├── .env.example
-├── .github/
-│   └── workflows/
-│       └── verify.yml
-├── .gitignore
-├── LICENSE
-├── README.md
-├── SKILL.md
-├── assets/
-│   └── report-template.md
-├── cases/
-│   └── synthetic-case/
-│       ├── amazon-sales-traffic.json
-│       ├── case.json
-│       └── xiyou-fixture.json
-├── docs/
-│   └── archive/
-│       ├── 2026-08-13-single-source-repository-design.md
-│       └── 2026-08-13-single-source-repository.md
-├── pyproject.toml
-├── references/
-│   ├── DATA-SOURCES.md
-│   ├── DIAGNOSTIC-RULES.md
-│   ├── FIELD-CONTRACTS.md
-│   └── SETUP.md
-├── requirements.txt
-├── scripts/
-│   ├── _runner.py
-│   ├── _test_distribution_contract.py
-│   ├── build_report.py
-│   ├── create_case.py
-│   ├── fetch_amazon.py
-│   ├── fetch_sqp.py
-│   ├── ingest_amazon.py
-│   ├── ingest_xiyou.py
-│   ├── register_evidence.py
-│   ├── resume_sqp.py
-│   ├── smoke_test.py
-│   ├── validate_distribution.py
-│   └── xiyou_skill/
-│       ├── __init__.py
-│       ├── __main__.py
-│       ├── amazon_spapi.py
-│       ├── cli.py
-│       ├── diagnostics.py
-│       ├── governance.py
-│       ├── models.py
-│       ├── normalize.py
-│       ├── raw_store.py
-│       ├── report.py
-│       ├── source_versions.py
-│       └── xiyou.py
-├── tests/
-│   ├── test_amazon.py
-│   ├── test_cli.py
-│   ├── test_diagnostics.py
-│   ├── test_governance.py
-│   ├── test_raw_store.py
-│   ├── test_report.py
-│   ├── test_repository_contract.py
-│   ├── test_verify_phase2.py
-│   └── test_xiyou.py
-└── tools/
-    └── verify_phase2.py
+├── .github/                            # CI 工作流
+├── assets/                             # 报告模板
+├── cases/                              # 合成 Case 样例
+├── docs/                               # 归档设计文档
+├── references/                         # 数据源、诊断规则与字段契约
+├── scripts/                            # CLI 入口脚本
+│   └── xiyou_skill/                    # 唯一的实现包
+├── tests/                              # 单元测试与仓库契约测试
+├── tools/                              # 阶段二验证脚本
+├── .env.example                        # SP-API 环境变量样例
+├── LICENSE                             # MIT 许可证
+├── SKILL.md                            # Skill 入口与流程
+├── pyproject.toml                      # 项目元数据与 pytest 配置
+└── requirements.txt                    # Python 依赖
 ```
-
-`SKILL.md`、`references/` 和 `assets/` 是 Skill 分发入口与配套资料；`docs/archive/` 保存已完成的单一源码迁移阶段文档。
 
 ## 架构图
 
-```mermaid
-flowchart TD
-    Scope[业务问题与 ASIN 范围] --> Case[create_case.py]
-    Case --> Review[人工确认竞品池与周期]
-    Review --> Config[Case JSON]
-    Browser[西柚官方页面导出] --> XLSX[XLSX 文件]
-    XLSX --> Ingest[ingest_xiyou.py]
-    Amazon[Amazon Reports API] --> Fetch[fetch_amazon / fetch_sqp / resume_sqp]
-    JSON[已有 Amazon JSON] --> Import[ingest_amazon.py]
-    Ingest --> Store[原始文件与 SHA-256 元数据]
-    Fetch --> Store
-    Import --> Store
-    Store --> Normalize[标准化 JSONL 与来源状态]
-    Config --> Diagnose[诊断规则与质量门]
-    Normalize --> Diagnose
-    Diagnose --> Report[Markdown 报告与 JSON sidecar]
-    Report --> Human[人工评审行动与复盘计划]
+原始数据保留版本和证据定位，报告按来源、周期与质量门决定哪些结论可以输出：
+
+```text
+【任务与数据接入】
+┌────────────────────────────────────────────┐
+│   业务问题 + 自身 ASIN + 4–8 个竞品 + 周期 │
+└──────────────────────┬─────────────────────┘
+                       ▼
+┌────────────────────────────────────────────┐
+│   create_case.py → Case JSON（竞品池待确认）│
+└──────────────────────┬─────────────────────┘
+                       ▼
+┌───────────────┬───────────────┬────────────┐
+│ 西柚官方 XLSX │ Amazon 报告   │ SP-API     │
+└───────┬───────┴───────┬───────┴─────┬──────┘
+        ▼               ▼             ▼
+┌────────────────────────────────────────────┐
+│ ingest_xiyou / ingest_amazon / fetch_amazon │
+│ fetch_sqp / resume_sqp                     │
+└──────────────────────┬─────────────────────┘
+                       ▼
+┌────────────────────────────────────────────┐
+│   原始文件 + SHA-256 + Evidence ID 归档     │
+└──────────────────────┬─────────────────────┘
+                       ▼
+┌────────────────────────────────────────────┐
+│   标准化 JSONL 与来源状态                   │
+└──────────────────────┬─────────────────────┘
+                       ▼
+┌────────────────────────────────────────────┐
+│   诊断规则：覆盖 → 排名 → 点击 → 转化       │
+└──────────────────────┬─────────────────────┘
+                       ▼
+┌────────────────────────────────────────────┐
+│   Markdown 报告 + 五个 JSON sidecar         │
+│   diagnostics / quality-gates / claims      │
+│   action-plan / review-plan                │
+└──────────────────────┬─────────────────────┘
+                       ▼
+┌────────────────────────────────────────────┐
+│   人工门②：评审行动与复盘计划               │
+└────────────────────────────────────────────┘
 ```
 
-命令行入口通过 `scripts/_runner.py` 调用唯一实现包 `scripts/xiyou_skill/`。原始数据保留版本和证据定位，报告根据来源、周期与质量门决定哪些结论可以输出。
+命令行入口通过 `scripts/_runner.py` 调用唯一实现包 `scripts/xiyou_skill/`；`.env`、`work/`、运行数据和报告都不提交到 Git。
 
-## 当前状态与开发计划
+## 开发计划
 
-`pyproject.toml` 版本为 `0.1.0`。当前实现包括 Case 管理、西柚导入、Amazon Sales and Traffic / SQP 获取与恢复、证据归档、诊断和报告生成。测试覆盖清洗、来源版本、质量门、报告、CLI 及仓库分发约定。
+### Phase 1: 任务与数据接入
 
-单一源码迁移已经体现在当前目录、测试和 CI 配置中，旧设计与执行计划保存在 `docs/archive/`。后续功能排期、发布里程碑和真实业务验收记录待补充。
+- ✅ Case 创建（站点、竞品、周期、业务问题）
+- ✅ 西柚 XLSX 导入与指标清洗
+- ✅ Amazon Sales and Traffic 导入与 SP-API 获取
 
-仓库没有广告 API 获取入口；涉及广告指标的结论需要另行提供相应证据。浏览器取数、竞品池确认和行动审批仍按 Skill 由人或宿主 Agent 执行。已有开发依赖时，可运行与 CI 对应的检查：
+### Phase 2: 诊断与证据
 
-```bash
-python -m pytest -q
-python scripts/smoke_test.py --work-dir .smoke-ci
-python scripts/validate_distribution.py
-git diff --check
-```
+- ✅ 覆盖 → 排名 → 点击 → 转化漏斗诊断
+- ✅ SQP 完整周取数与 `reportId` 恢复
+- ✅ 原始文件 SHA-256、定位器与 Evidence ID 归档
+
+### Phase 3: 报告与评审
+
+- ✅ Markdown 报告与五个 JSON sidecar
+- ✅ 质量门、结论与行动评审输出
+- ✅ 合成 Case 离线回放
+
+### Phase 4: 工程化
+
+- ✅ GitHub Actions（Windows，pytest + 回放 + 分发检查）
+- ✅ 仓库分发契约测试
+- ⬜ 真实业务验收记录
+- ⬜ 后续功能排期与发布里程碑
 
 ## 文档
 
@@ -216,3 +193,7 @@ git diff --check
 ## 许可证
 
 [MIT License](LICENSE)，Copyright (c) 2026 fubo-ops。
+
+---
+
+原 README 里的环境要求、安装与 Skill 部署、完整命令、数据边界、全部已跟踪文件清单与当前状态等细节，已全部迁移到 [docs/详细说明.md](docs/详细说明.md)。
